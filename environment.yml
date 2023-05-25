@@ -1,0 +1,15 @@
+# conda env create -f environment.yml
+# conda env update -f environment.yml
+
+name: serapis
+
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - ipykernel
+  - pip
+  - scikit-learn
+  - pip:
+    - tensorflow==2.12
+    - rdkit
