@@ -1,0 +1,14 @@
+Energetic Original (energetic_original.csv)
+ - Original data provided.
+
+Energetic Enhanced (energetic_enhanced.csv)
+- Original data plus a select few molecular descriptors added by RDKit.
+
+Energetic Original Enhanced (energetic_original_enhanced.csv)
+- Original data plus all molecular descriptors from RDKit.
+
+Energetic Only Enhanced (energetic_only_enhanced.csv)
+- Only SMILES from original data used to generate all possible molecular descriptors from RDKit.
+
+Energetic Generated Enhanced (energetic_generated_enhanced.csv)
+- Additional generated data from research paper also plus select subset of molecular descriptors.
