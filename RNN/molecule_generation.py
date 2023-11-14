@@ -152,20 +152,13 @@ def await_input(df):
         st.session_state.df = st.session_state.old_df.copy()
     if not hasattr(st.session_state, 'reset'):
         st.session_state.reset = None
-    if 'submit_status' not in st.session_state:
-        st.session_state.submit_status = {'dv': False, 'sa': False}
-    with st.form(clear_on_submit=False, key='sa'):
-        st.session_state.sa_threshold = st.number_input('Please enter the highest allowed SA score threshold:')
-        submit_sa = st.form_submit_button('Enter')
-    with st.form(clear_on_submit=False, key='dv'):
+    with st.form(key='thresholds'):
         st.session_state.dv_threshold = st.number_input('Please enter the lowest allowed detonation velocity threshold:')
-        submit_dv = st.form_submit_button('Enter')
-        st.session_state.submit_status['dv'] = submit_dv
-        st.session_state.submit_status['sa'] = submit_sa
-    if 'submit_status' in st.session_state:
-        combined_submit = any(st.session_state.submit_status.values())
-    print('Combined Submit Status:', combined_submit)
-    if combined_submit:
+        st.session_state.sa_threshold = st.number_input('Please enter the highest allowed SA score threshold:')
+        submit_button = st.form_submit_button('Submit')
+    # Check if both thresholds have been submitted
+    if submit_button:
+        st.session_state.submitted = True
         submitted()
         st.session_state.container = st.session_state.df
     st.write(st.session_state.container)
