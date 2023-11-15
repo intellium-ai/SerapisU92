@@ -2,9 +2,14 @@ import streamlit as st
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from launcher_of_clm import valid_generate
 from launcher_of_sm import score
 import json
+import os
+import rdkit
+from rdkit import Chem
+from rdkit.Chem import Draw
 
 # load credentials and api keys
 with open("streamlit_utils/env.json", "r+") as f:
@@ -26,15 +31,10 @@ if not hasattr(st.session_state, "df"):
     st.session_state.df = None
 if not hasattr(st.session_state, "filtered_df"):
     st.session_state.filtered_df = None
-if not hasattr(st.session_state, "reset"):
-    st.session_state.reset = None
-if not hasattr(st.session_state, "num_molecules"):
-    st.session_state.num_molecules = None
-
 
 # Set page title
 st.set_page_config(
-    page_title="BoostPrep",
+    page_title="Energetic Materials",
     page_icon=Image.open("streamlit_utils/Logomark-RGB-vector-purple.ico"),
     layout="wide",
 )
@@ -93,21 +93,33 @@ def main():
     if st.session_state.logged_in:
         with st.sidebar:
             # get data by uploading or generating
-            data_source = st.selectbox(
-                "Choose Data Source", ("Upload CSV File", "Generate molecules")
+            mode = st.selectbox(
+                "Data Selection:",
+                ["Use Existing Data", "Generate New Molecules"],
+                index=0,
             )
-            if data_source == "Upload CSV File":
-                # Display file uploader widget
-                csv_file = st.file_uploader("Upload a CSV file", type=["csv"])
-                if csv_file is not None:
-                    df = pd.read_csv(csv_file)
-                    st.session_state.df = df
-            else:
-                st.session_state.num_molecules = st.number_input(
-                    "Enter the number of molecules to be generated:"
+
+            if mode == "Use Existing Data":
+                csv_file = st.selectbox(
+                    "Select File:",
+                    sorted(os.listdir("streamlit_utils/generated_scored_data")),
+                    index=0,
                 )
 
-                st.button("Generate molecules", on_click=generate_scored_mol)
+                st.session_state.df = pd.read_csv(
+                    "streamlit_utils/generated_scored_data/" + csv_file
+                )
+
+            elif mode == "Generate New Molecules":
+                num_molecules = st.number_input(
+                    "Number of molecules to generate:", step=1, min_value=2
+                )
+
+                if st.button("Generate molecules"):
+                    with st.spinner("Please wait..."):
+                        csv_file = generate_scored_mol(num_molecules)
+
+                    st.session_state.df = pd.read_csv(csv_file)
 
         # clear login screen
         image.empty()
@@ -128,7 +140,7 @@ def main():
                 with mid_left:
                     # filter
                     dv_threshold = st.slider(
-                        "Filter Detonation Velocity",
+                        "Detonation Velocity (D)",
                         st.session_state.df["D"].min(),
                         st.session_state.df["D"].max(),
                         (
@@ -138,7 +150,7 @@ def main():
                         key="jj",
                     )
                     sa_threshold = st.slider(
-                        "Filter SA Score",
+                        "SA Score (SA)",
                         st.session_state.df["SA"].min(),
                         st.session_state.df["SA"].max(),
                         (
@@ -155,53 +167,90 @@ def main():
                         & (st.session_state.df["SA"] <= sa_threshold[1])
                     ]
 
-                    st.write(st.session_state.filtered_df)
-
-                with mid_right:
-                    plot_graph()
-
-                    st.session_state.reset = st.button(
-                        "Reset Transforms", on_click=reset
+                    st.dataframe(
+                        st.session_state.filtered_df, column_order=["D", "SA", "smiles"]
                     )
 
+                with mid_right:
+                    st.write(
+                        len(st.session_state.filtered_df),
+                        "out of",
+                        len(st.session_state.df),
+                        "datapoints selected",
+                    )
+                    plot_graph()
 
-def generate_scored_mol():
+                    # show molecule
+                    molecule_id = st.selectbox(
+                        "Select Molecule Index to Visualise:",
+                        list(st.session_state.filtered_df.index),
+                        index=0,
+                    )
+
+                    if molecule_id is not None:
+                        smiles = st.session_state.filtered_df["smiles"][molecule_id]
+                        mol = Chem.MolFromSmiles(smiles)
+                        img = Draw.MolToImage(mol)
+                        st.image(img, width=200, caption=smiles)
+
+
+def generate_scored_mol(num_molecules):
     valid_generate(
-        st.session_state.num_molecules,
+        num_molecules,
         0,
         "streamlit_utils/data/Dm.csv",
         "streamlit_utils/models/ft_pretrained_100k.pth",
-        "streamlit_utils/data/generated.csv",
+        "streamlit_utils/data/generated_tmp.csv",
         None,
     )
     score(
         "streamlit_utils/data/Dm.csv",
-        "streamlit_utils/data/generated.csv",
+        "streamlit_utils/data/generated_tmp.csv",
         "streamlit_utils/models/reg_50_pretrained.pth",
-        f"streamlit_utils/data/generated_scored_{st.session_state.num_molecules}.csv",
+        f"streamlit_utils/generated_scored_data/generated_scored_{num_molecules}.csv",
         0,
         0,
         11,
     )
-    return f"streamlit_utils/data/generated_scored_{st.session_state.num_molecules}.csv"
+    return f"streamlit_utils/generated_scored_data/generated_scored_{num_molecules}.csv"
 
 
 def plot_graph():
     # Create a Matplotlib figure
     fig, ax = plt.subplots()
 
-    # highlight = df[df.D > dv_threshold][df.SA < sa_threshold]
-
     # Plot the data points
     ax.scatter(
-        st.session_state.df["D"], st.session_state.df["SA"], marker=".", alpha=0.8
+        st.session_state.df["D"],
+        st.session_state.df["SA"],
+        marker=".",
+        alpha=0.2,
+        c="blue",
     )
     ax.scatter(
         st.session_state.filtered_df["D"],
         st.session_state.filtered_df["SA"],
         marker=".",
         alpha=1,
-        c="gold",
+        c="blue",
+    )
+
+    blx = st.session_state.filtered_df["D"].min()
+    bly = st.session_state.filtered_df["SA"].min()
+
+    width = st.session_state.filtered_df["D"].max() - blx
+    height = st.session_state.filtered_df["SA"].max() - bly
+
+    ax.add_patch(
+        Rectangle(
+            xy=(blx, bly),
+            width=width,
+            height=height,
+            linewidth=1,
+            color="blue",
+            fill=True,
+            alpha=0.2,
+        )
     )
 
     ax.set_xlabel("Detonation Velocity")
@@ -209,13 +258,6 @@ def plot_graph():
 
     # Display the Matplotlib figure in Streamlit
     st.pyplot(fig)
-
-
-def reset():
-    st.session_state.df = pd.DataFrame()
-    st.session_state.df = st.session_state.old_df.copy()
-    st.session_state.container = st.container()
-    st.session_state.container = st.session_state.df
 
 
 if __name__ == "__main__":
