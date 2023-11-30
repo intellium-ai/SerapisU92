@@ -89,8 +89,10 @@ def valid_generate(valid: int, idx: int, data_path: str, model_path: str, saving
         generate_smiles = smi_tools.to_canonical_smi(generate_smiles[0])
         if generate_smiles:
             valid -= 1
+            if generate_smiles in valid_smiles:
+                print(True)
             valid_smiles.append(generate_smiles)
-
+    print(len(valid_smiles))
     unique_smiles = list(set(valid_smiles))
     novel_smiles = [smi for smi in unique_smiles if smi not in raw_smiles]
     tools.save_data_to_csv(saving_path, [[smi] for smi in novel_smiles], ['smiles'])
@@ -98,11 +100,39 @@ def valid_generate(valid: int, idx: int, data_path: str, model_path: str, saving
 
     return novel_smiles
 
+def generate_novel_smiles(num_novel: int, idx: int,data_path: str, model_path: str, saving_path: str, tokens: list = None) -> list:
+   # processing smiles
+    data, head = tools.load_data_from_csv(data_path, with_head=True)
+    smiles = [x[idx] for x in data]
+    raw_smiles = [smi_tools.to_canonical_smi(smi) for smi in smiles]
+    raw_smiles = [smi for smi in raw_smiles if smi is not None]
+    novel_smiles = []
+    # initialize clm
+    if not tokens:
+        tokens = smi_tools.gather_tokens([cfg.BOS + smi + cfg.EOS for smi in smiles], single_split=cfg.SINGLE_TOKENIZE)
+    m = builder.build_clm(len(tokens), model_path)
+    valid_counter = 0
+    while len(novel_smiles) < num_novel:
+        if valid_counter % 100 == 0:
+            print(f'\nGenerated {valid_counter} Valid SMILES\n')
+            print(f'\nGenerated {len(novel_smiles)} Novel SMILES\n')
+        generate_smiles = builder.sampling(m, tokens, n=1)
+        generate_smiles = smi_tools.to_canonical_smi(generate_smiles[0])
+        if generate_smiles:
+            valid_counter += 1
+            if generate_smiles not in novel_smiles and generate_smiles not in raw_smiles:
+                novel_smiles.append(generate_smiles)
+    # Save novel smiles to CSV
+    tools.save_data_to_csv(saving_path, [[smi] for smi in novel_smiles], ['smiles'])
+
+    print(f'Generated {len(novel_smiles)} novel SMILES')
+    return novel_smiles
+
 
 if __name__ == '__main__':
-    #train_clm(dataset_path='data/Dm.csv', SMILE_index=0, model_name='not_pt_303', epochs=30)
-    valid_generate(20000, 0, 'data/Dm.csv', 'ft_pretrained_100k.pth', 'generated.csv', None)
-
-    # train_clm(dataset_path='data/Ds_9.csv', SMILE_index=0, model_name='pt', epochs=30)
-    # train_clm(dataset_path='data/Dm.csv', SMILE_index=0, model_name='ft', epochs=30, model_path=pt.pth)
+    #train_clm(dataset_path='data/Dm.csv', SMILE_index=0, model_name='not_pt_303', epochs=100)
+    #valid_generate(1000, 0, 'data/Dm.csv', 'ft.pth', 'generated.csv', None)
+    generate_novel_smiles(1000, 0, 'data/Dm.csv', 'ft.pth', 'generated.csv', None)
+    #train_clm(dataset_path='data/Ds_9.csv', SMILE_index=0, model_name='pt', epochs=100)
+    #train_clm(dataset_path='data/Dm.csv', SMILE_index=0, model_name='ft', epochs=100, model_path="pt.pth")
     

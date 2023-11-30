@@ -3,7 +3,7 @@ import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from launcher_of_clm import valid_generate
+from launcher_of_clm import valid_generate,generate_novel_smiles
 from launcher_of_sm import score
 import json
 import os
@@ -112,11 +112,11 @@ def main():
 
             elif mode == "Generate New Molecules":
                 num_molecules = st.number_input(
-                    "Number of molecules to generate:", step=1, min_value=2
+                    "Number of novel molecules to generate:", step=1, min_value=2
                 )
 
                 if st.button("Generate molecules"):
-                    with st.spinner("Please wait..."):
+                    with st.spinner("Please wait, molecules are being generated. This may take some time if the number of desired novel molecules is large."):
                         csv_file = generate_scored_mol(num_molecules)
 
                     st.session_state.df = pd.read_csv(csv_file)
@@ -195,11 +195,11 @@ def main():
 
 
 def generate_scored_mol(num_molecules):
-    valid_generate(
+    generate_novel_smiles(
         num_molecules,
         0,
         "streamlit_utils/data/Dm.csv",
-        "streamlit_utils/models/ft_pretrained_100k.pth",
+        "streamlit_utils/models/ft.pth",
         "streamlit_utils/data/generated_tmp.csv",
         None,
     )
