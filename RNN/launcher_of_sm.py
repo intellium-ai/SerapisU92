@@ -121,9 +121,9 @@ def score(train_data_path: str, data_path: str, model_path: str, saving_path: st
     print(np.mean(sa_scores), np.std(sa_scores))
 
     data = [[raw_smiles[idx], y_predict[idx], sa_scores[idx]] for idx in range(len(raw_smiles))]
-    tools.save_data_to_csv(saving_path, data, head=['smiles', head[target_index], 'SA'])
+    tools.save_data_to_csv(saving_path, data, head=['smiles', head[target_index], 'SA'],index = False)
 
 
 if __name__ == '__main__':
-    #train_predictor('data/Dm.csv', 'ft_pretrained_100k.pth', target_index=11, epochs=100, k=10, SMILE_enumeration_level=50)
-    score('data/Dm.csv', 'generated.csv', 'record/reg_50_pretrained.pth', 'generated_scored.csv', 0, 0, 11)
+    train_predictor('data/Dm.csv', 'ft.pth', target_index=11, epochs=100, k=10, SMILE_enumeration_level=50)
+    #score('data/Dm.csv', 'generated.csv', 'record/reg_50_pretrained.pth', 'generated_scored.csv', 0, 0, 11)

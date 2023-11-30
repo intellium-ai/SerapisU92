@@ -8,6 +8,7 @@ from launcher_of_sm import score
 import json
 import os
 import rdkit
+import base64
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -120,7 +121,7 @@ def main():
                         csv_file = generate_scored_mol(num_molecules)
 
                     st.session_state.df = pd.read_csv(csv_file)
-
+        download_csv('streamlit_utils/generated_scored_data/')
         # clear login screen
         image.empty()
         login_container.empty()
@@ -259,6 +260,18 @@ def plot_graph():
     # Display the Matplotlib figure in Streamlit
     st.pyplot(fig)
 
+def download_csv(csv_directory):
+
+    def extract_data(file_path):
+        with open(file_path, 'rb') as file:
+            data = file.read()
+        return data
+    csv_files = [file for file in os.listdir(csv_directory) if file.endswith(".csv")]
+    # Display a selectbox for file selection
+    selected_file = st.selectbox("Select a CSV file to download", csv_files)
+    #Add a download button
+    print(os.path.join(csv_directory,selected_file))
+    st.download_button(label = "Download CSV",data = extract_data(os.path.join(csv_directory,selected_file)), file_name=selected_file)
 
 if __name__ == "__main__":
     main()
