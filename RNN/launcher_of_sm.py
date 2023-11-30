@@ -121,7 +121,7 @@ def score(train_data_path: str, data_path: str, model_path: str, saving_path: st
     print(np.mean(sa_scores), np.std(sa_scores))
 
     data = [[raw_smiles[idx], y_predict[idx], sa_scores[idx]] for idx in range(len(raw_smiles))]
-    tools.save_data_to_csv(saving_path, data, head=['smiles', head[target_index], 'SA'],index = False)
+    tools.save_data_to_csv(saving_path, data, head=['smiles', head[target_index], 'SA'])
 
 
 if __name__ == '__main__':
