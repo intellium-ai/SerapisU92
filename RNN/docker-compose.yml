@@ -1,0 +1,17 @@
+version: '3'
+services:
+  qinetiq:
+    build:
+      dockerfile: ./Dockerfile
+    container_name: qinetiq_energetic_molecules
+    restart: always
+    ports:
+      - "8558:8558"
+    command: streamlit run molecule_generation_filter_app.py --server.port=8558
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0' ]
+              capabilities: [ GPU ]

@@ -1,0 +1,13 @@
+[server]
+port=8558
+headless=true
+enableCORS=false
+enableXsrfProtection=false
+enableWebsocketCompression=false
+maxUploadSize = 800
+maxMessageSize = 800
+
+[browser]
+serverAddress="energeticmaterials.intellium.ai"
+serverPort=443
+gatherUsageStats=false
