@@ -1,0 +1,4 @@
+smiles
+O=[N+](C1=NON=C1[N]2=C([N+]([O-])=O)NC([N+]([O-])=O)=N2)[O-]
+O=[N+](C1=NN(CO[N+]([O-])=O)C([N+]([O-])=O)=N1)[O-]
+O=[N+](C1=NN(CN[N+]([O-])=O)C([N+]([O-])=O)=N1)[O-]

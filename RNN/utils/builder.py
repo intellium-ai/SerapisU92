@@ -59,23 +59,23 @@ def build_reg(size: int, path: str, pretrained=False):
                              dropout_rate=cfg.REG_DROPOUT_RATE)
     m.to(cfg.DEVICE)
     # print model info
-    print(f'Structure of model:\n{m}')
+    #print(f'Structure of model:\n{m}')
     n_weights = sum(p.numel() for p in m.parameters())
-    print(f'Number of parameters: {n_weights}')
+    #print(f'Number of parameters: {n_weights}')
     # load parameters
     if pretrained:
-        print(f'Load pre-trained model: {path}')
+        #print(f'Load pre-trained model: {path}')
         checkpoint = torch.load(path)
         pre_trained_model = checkpoint['model']
         model_dict = m.state_dict()
         state_dict = {k: v for k, v in pre_trained_model.items() if k in model_dict.keys()}
-        print(state_dict.keys())  # dict_keys(['w', 'conv1.weight', 'conv1.bias', 'conv2.weight', 'conv2.bias'])
+        #print(state_dict.keys())  # dict_keys(['w', 'conv1.weight', 'conv1.bias', 'conv2.weight', 'conv2.bias'])
         model_dict.update(state_dict)
         m.load_state_dict(model_dict)
-        print('Pre-trained parameters loaded')
+        #print('Pre-trained parameters loaded')
     elif path:
-        print(f'Load model: {path}')
-        checkpoint = torch.load(path)
+        #print(f'Load model: {path}')
+        checkpoint = torch.load(path, map_location=torch.device(cfg.DEVICE))
         m.load_state_dict(checkpoint['model'])
 
     return m

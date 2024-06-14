@@ -57,16 +57,16 @@ class RNNPredictor(nn.Module):
 
         return output, hidden
 
-def train(model, optimizer, train_loader, valid_x, valid_y, epochs, name='reg'):
+def train(model, optimizer, train_loader, valid_x, valid_y, epochs, filename):
 
-    print('Start training')
+    #print('Start training')
 
     record_path = os.getcwd() + '/record/'
     if not os.path.exists(record_path):
         os.makedirs(record_path)
 
     records = []
-    for epoch in tqdm(range(1, epochs + 1), unit='epoch'):
+    for epoch in tqdm(range(1, epochs + 1), unit='epoch', desc=f'Training {filename}'):
         train_loss = 0
         for batch_idx, data in enumerate(train_loader):
 
@@ -100,7 +100,7 @@ def train(model, optimizer, train_loader, valid_x, valid_y, epochs, name='reg'):
         records.append(record)
 
     state = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epochs': epoch}
-    torch.save(state, f'record/reg_{train_loss}.pth')
+    torch.save(state, f'training_records/{filename}.pth')
     return records
 
 
